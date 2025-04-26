@@ -7,6 +7,8 @@ import {
   UPDATE_TASK,
   COMPLETE_TASK,
   DELETE_TASK,
+  RESET_EVERYTHING,
+  TOGGLE_TASK_COMPLETION,
 } from "../graphql/resolvers";
 
 export const useTasks = () => {
@@ -55,6 +57,21 @@ export const useTasks = () => {
     },
   });
 
+  const [resetEverythingMutation] = useMutation(RESET_EVERYTHING, {
+    onCompleted: () => {
+      refetchTasks();
+      refetchStats();
+      refetchBadges();
+    },
+  });
+
+  const [toggleTaskCompletionMutation] = useMutation(TOGGLE_TASK_COMPLETION, {
+    onCompleted: () => {
+      refetchTasks();
+      refetchStats();
+    },
+  });
+
   const createTask = (
     title: string,
     description?: string,
@@ -88,6 +105,16 @@ export const useTasks = () => {
     });
   };
 
+  const resetEverything = () => {
+    return resetEverythingMutation();
+  };
+
+  const toggleTaskCompletion = (id: string) => {
+    return toggleTaskCompletionMutation({
+      variables: { id },
+    });
+  };
+
   return {
     tasks: tasksData?.tasks || [],
     userStats: statsData?.userStats,
@@ -98,5 +125,7 @@ export const useTasks = () => {
     updateTask,
     completeTask,
     deleteTask,
+    resetEverything,
+    toggleTaskCompletion,
   };
 };

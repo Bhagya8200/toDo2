@@ -13,6 +13,7 @@ interface TaskItemProps {
     description?: string,
     priority?: TaskPriority
   ) => void;
+  onToggleCompletion: (id: string) => void;
 }
 
 const TaskItem: React.FC<TaskItemProps> = ({
@@ -20,6 +21,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
   onComplete,
   onDelete,
   onUpdate,
+  onToggleCompletion,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(task.title);
@@ -48,6 +50,9 @@ const TaskItem: React.FC<TaskItemProps> = ({
   const handleComplete = () => {
     if (!task.completed) {
       setShowMoodModal(true);
+    } else {
+      // If already completed, toggle completion
+      onToggleCompletion(task.id);
     }
   };
 

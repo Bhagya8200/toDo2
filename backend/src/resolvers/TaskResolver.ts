@@ -4,6 +4,7 @@ import { UserStats } from "../entity/UserStats";
 import { Badge } from "../entity/Badge";
 import { AppDataSource } from "../data-source";
 import { MoodType, TaskPriority } from "../shared/types";
+import { Not, Raw } from "typeorm";
 
 @Resolver(Task)
 export class TaskResolver {
@@ -17,11 +18,11 @@ export class TaskResolver {
     });
   }
 
-  // @Mutation(() => Boolean)
-  // async deleteAllTasks(): Promise<boolean> {
-  //   await AppDataSource.getRepository(Task).clear();
-  //   return true;
-  // }
+  @Mutation(() => Boolean)
+  async deleteAllTasks(): Promise<boolean> {
+    await AppDataSource.getRepository(Task).clear();
+    return true;
+  }
 
   @Query(() => Task, { nullable: true })
   async task(@Arg("id", () => ID) id: string): Promise<Task | null> {
@@ -163,6 +164,99 @@ export class TaskResolver {
     }
 
     return await taskRepo.remove(task);
+  }
+
+  // In backend/src/resolvers/TaskResolver.ts
+
+  // Add these new mutations
+  @Mutation(() => Boolean)
+  async resetEverything(): Promise<boolean> {
+    // Delete all tasks
+    await AppDataSource.getRepository(Task).clear();
+
+    // Delete all badges
+    await AppDataSource.getRepository(Badge).clear();
+
+    // Reset user stats
+    const statsRepo = AppDataSource.getRepository(UserStats);
+    let stats = await statsRepo.findOne({ where: {} });
+
+    if (stats) {
+      stats.totalPoints = 0;
+      stats.tasksCompleted = 0;
+      stats.currentStreak = 0;
+      stats.longestStreak = 0;
+      stats.lastCompletedAt = undefined;
+      await statsRepo.save(stats);
+    }
+
+    return true;
+  }
+
+  @Mutation(() => Task)
+  async toggleTaskCompletion(@Arg("id", () => ID) id: string): Promise<Task> {
+    const taskRepo = AppDataSource.getRepository(Task);
+    const task = await taskRepo.findOneBy({ id });
+
+    if (!task) {
+      throw new Error("Task not found");
+    }
+
+    // If task is already completed, we need to undo the completion
+    if (task.completed) {
+      // Get user stats to update them
+      const statsRepo = AppDataSource.getRepository(UserStats);
+      let stats = await statsRepo.findOne({ where: {} });
+
+      if (stats) {
+        // Revert the points
+        stats.totalPoints -= task.points;
+
+        // Decrement completed tasks count
+        stats.tasksCompleted = Math.max(0, stats.tasksCompleted - 1);
+
+        // Handle streak if this was the only task completed today
+        // This is a simplified approach - for a real app you'd want to check if
+        // other tasks were completed on the same day before affecting streaks
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const completedAt = task.completedAt
+          ? new Date(task.completedAt)
+          : null;
+        if (completedAt) {
+          completedAt.setHours(0, 0, 0, 0);
+
+          // If this was completed today and it was the task keeping the streak
+          if (completedAt.getTime() === today.getTime()) {
+            // Check if there are other tasks completed today
+            const otherTasksCompletedToday = await taskRepo.count({
+              where: {
+                completed: true,
+                id: Not(id), // Not this task
+                completedAt: Raw((alias) => `DATE(${alias}) = CURRENT_DATE`),
+              },
+            });
+
+            // If no other tasks completed today, we might need to adjust the streak
+            if (otherTasksCompletedToday === 0) {
+              // For simplicity, we'll just decrement the streak
+              // A more complex implementation would check previous days
+              stats.currentStreak = Math.max(0, stats.currentStreak - 1);
+            }
+          }
+        }
+
+        await statsRepo.save(stats);
+      }
+
+      // Update the task
+      task.completed = false;
+      task.completedAt = undefined;
+      task.completionMood = undefined;
+    }
+
+    return await taskRepo.save(task);
   }
 
   private async checkForBadges(stats: UserStats): Promise<void> {

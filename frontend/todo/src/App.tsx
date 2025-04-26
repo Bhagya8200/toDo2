@@ -1,17 +1,18 @@
-import React from 'react';
-import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
-import Layout from './components/Layout';
-import AddTaskForm from './components/AddTaskForm';
-import TaskList from './components/TaskList';
-import UserStats from './components/UserStats';
-import BadgeDisplay from './components/BadgeDisplay';
-import { useTasks } from './hooks/useTasks';
-import { TaskPriority, MoodType } from '../src/shared/types';
+import React from "react";
+import { ApolloClient, InMemoryCache, ApolloProvider } from "@apollo/client";
+import Layout from "./components/Layout";
+import AddTaskForm from "./components/AddTaskForm";
+import TaskList from "./components/TaskList";
+import UserStats from "./components/UserStats";
+import BadgeDisplay from "./components/BadgeDisplay";
+import ResetButton from "./components/ResetButton";
+import { useTasks } from "./hooks/useTasks";
+import { TaskPriority, MoodType } from "../src/shared/types";
 
 // Create Apollo client
 const client = new ApolloClient({
-  uri: 'http://localhost:4002/graphql',
-  cache: new InMemoryCache()
+  uri: "http://localhost:4002/graphql",
+  cache: new InMemoryCache(),
 });
 
 const TaskApp: React.FC = () => {
@@ -24,7 +25,9 @@ const TaskApp: React.FC = () => {
     createTask,
     updateTask,
     completeTask,
-    deleteTask
+    deleteTask,
+    resetEverything,
+    toggleTaskCompletion,
   } = useTasks();
 
   if (error) {
@@ -35,11 +38,20 @@ const TaskApp: React.FC = () => {
     );
   }
 
-  const handleAddTask = (title: string, description: string, priority: TaskPriority) => {
+  const handleAddTask = (
+    title: string,
+    description: string,
+    priority: TaskPriority
+  ) => {
     createTask(title, description || undefined, priority);
   };
 
-  const handleUpdateTask = (id: string, title?: string, description?: string, priority?: TaskPriority) => {
+  const handleUpdateTask = (
+    id: string,
+    title?: string,
+    description?: string,
+    priority?: TaskPriority
+  ) => {
     updateTask(id, title, description, priority);
   };
 
@@ -51,15 +63,27 @@ const TaskApp: React.FC = () => {
     deleteTask(id);
   };
 
+  const handleResetEverything = () => {
+    resetEverything();
+  };
+
+  const handleToggleCompletion = (id: string) => {
+    toggleTaskCompletion(id);
+  };
+
   return (
     <div>
       <UserStats stats={userStats} loading={loading} />
       <BadgeDisplay badges={badges} loading={loading} />
       <AddTaskForm onAdd={handleAddTask} />
+      <ResetButton onReset={handleResetEverything} />
       {loading ? (
         <div className="space-y-4">
           {[...Array(3)].map((_, index) => (
-            <div key={index} className="animate-pulse h-24 bg-gray-200 rounded-lg"></div>
+            <div
+              key={index}
+              className="animate-pulse h-24 bg-gray-200 rounded-lg"
+            ></div>
           ))}
         </div>
       ) : (
@@ -68,6 +92,7 @@ const TaskApp: React.FC = () => {
           onCompleteTask={handleCompleteTask}
           onDeleteTask={handleDeleteTask}
           onUpdateTask={handleUpdateTask}
+          onToggleCompletion={handleToggleCompletion}
         />
       )}
     </div>

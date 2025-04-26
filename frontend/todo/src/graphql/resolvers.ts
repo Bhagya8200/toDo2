@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
 export const GET_TASKS = gql`
   query GetTasks {
@@ -45,7 +45,11 @@ export const GET_BADGES = gql`
 //mutations
 
 export const CREATE_TASK = gql`
-  mutation CreateTask($title: String!, $description: String, $priority: String) {
+  mutation CreateTask(
+    $title: String!
+    $description: String
+    $priority: String
+  ) {
     createTask(title: $title, description: $description, priority: $priority) {
       id
       title
@@ -57,8 +61,18 @@ export const CREATE_TASK = gql`
 `;
 
 export const UPDATE_TASK = gql`
-  mutation UpdateTask($id: ID!, $title: String, $description: String, $priority: String) {
-    updateTask(id: $id, title: $title, description: $description, priority: $priority) {
+  mutation UpdateTask(
+    $id: ID!
+    $title: String
+    $description: String
+    $priority: String
+  ) {
+    updateTask(
+      id: $id
+      title: $title
+      description: $description
+      priority: $priority
+    ) {
       id
       title
       description
@@ -83,6 +97,23 @@ export const DELETE_TASK = gql`
   mutation DeleteTask($id: ID!) {
     deleteTask(id: $id) {
       id
+    }
+  }
+`;
+
+export const RESET_EVERYTHING = gql`
+  mutation ResetEverything {
+    resetEverything
+  }
+`;
+
+export const TOGGLE_TASK_COMPLETION = gql`
+  mutation ToggleTaskCompletion($id: ID!) {
+    toggleTaskCompletion(id: $id) {
+      id
+      completed
+      completedAt
+      completionMood
     }
   }
 `;
