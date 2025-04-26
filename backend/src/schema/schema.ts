@@ -7,6 +7,6 @@ export const createSchema = async () => {
   return await buildSchema({
     resolvers: [TaskResolver, BadgeResolver, UserStatsResolver],
     emitSchemaFile: true,
-    validate: false,
+    validate: true,
   });
 };

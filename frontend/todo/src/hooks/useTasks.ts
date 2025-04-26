@@ -7,7 +7,7 @@ import {
   UPDATE_TASK,
   COMPLETE_TASK,
   DELETE_TASK,
-} from "../graphql/queries";
+} from "../graphql/resolvers";
 
 export const useTasks = () => {
   const {

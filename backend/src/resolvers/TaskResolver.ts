@@ -17,11 +17,11 @@ export class TaskResolver {
     });
   }
 
-  @Mutation(() => Boolean)
-  async deleteAllTasks(): Promise<boolean> {
-    await AppDataSource.getRepository(Task).clear();
-    return true;
-  }
+  // @Mutation(() => Boolean)
+  // async deleteAllTasks(): Promise<boolean> {
+  //   await AppDataSource.getRepository(Task).clear();
+  //   return true;
+  // }
 
   @Query(() => Task, { nullable: true })
   async task(@Arg("id", () => ID) id: string): Promise<Task | null> {

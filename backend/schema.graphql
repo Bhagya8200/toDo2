@@ -20,7 +20,6 @@ scalar DateTimeISO
 type Mutation {
   completeTask(id: ID!, mood: String!): Task!
   createTask(description: String, priority: String, title: String!): Task!
-  deleteAllTasks: Boolean!
   deleteTask(id: ID!): Task!
   updateTask(description: String, id: ID!, priority: String, title: String): Task!
 }

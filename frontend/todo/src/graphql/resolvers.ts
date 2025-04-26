@@ -42,6 +42,8 @@ export const GET_BADGES = gql`
   }
 `;
 
+//mutations
+
 export const CREATE_TASK = gql`
   mutation CreateTask($title: String!, $description: String, $priority: String) {
     createTask(title: $title, description: $description, priority: $priority) {
