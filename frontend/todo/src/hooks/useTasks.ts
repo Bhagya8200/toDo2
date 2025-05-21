@@ -69,6 +69,7 @@ export const useTasks = () => {
     onCompleted: () => {
       refetchTasks();
       refetchStats();
+      refetchBadges(); // Add this line to refresh badges when toggling task completion
     },
   });
 
