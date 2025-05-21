@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import { TaskPriority } from '../shared/types';
+import React, { useState } from "react";
+import { TaskPriority } from "../shared/types";
 
 interface AddTaskFormProps {
   onAdd: (title: string, description: string, priority: TaskPriority) => void;
 }
 
 const AddTaskForm: React.FC<AddTaskFormProps> = ({ onAdd }) => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<TaskPriority>(TaskPriority.MEDIUM);
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -15,8 +15,8 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onAdd }) => {
     e.preventDefault();
     if (title.trim()) {
       onAdd(title, description, priority);
-      setTitle('');
-      setDescription('');
+      setTitle("");
+      setDescription("");
       setPriority(TaskPriority.MEDIUM);
       setIsExpanded(false);
     }

@@ -74,7 +74,7 @@ const TaskList: React.FC<TaskListProps> = ({
                 onComplete={onCompleteTask}
                 onDelete={onDeleteTask}
                 onUpdate={onUpdateTask}
-                onToggleCompletion={onToggleCompletion} 
+                onToggleCompletion={onToggleCompletion}
               />
             ))}
           </div>

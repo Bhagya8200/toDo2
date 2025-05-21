@@ -47,11 +47,13 @@ const TaskItem: React.FC<TaskItemProps> = ({
     setIsEditing(false);
   };
 
-  const handleComplete = () => {
+  const handleCheckboxChange = () => {
     if (!task.completed) {
+      // If task is not completed, show the mood modal
       setShowMoodModal(true);
     } else {
-      // If already completed, toggle completion
+      // If task is already completed, toggle completion status
+      // This will properly update streaks and badges
       onToggleCompletion(task.id);
     }
   };
@@ -125,9 +127,8 @@ const TaskItem: React.FC<TaskItemProps> = ({
             <input
               type="checkbox"
               checked={task.completed}
-              onChange={handleComplete}
+              onChange={handleCheckboxChange}
               className="h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500 mr-3"
-              disabled={task.completed}
             />
             <div>
               <h3
