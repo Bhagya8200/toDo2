@@ -170,60 +170,52 @@ export class TaskResolver {
       throw new Error("Task not found");
     }
 
+    // Get user stats to update them
+    const statsRepo = AppDataSource.getRepository(UserStats);
+    let stats = await statsRepo.findOne({ where: {} });
+
+    if (!stats) {
+      stats = statsRepo.create({
+        totalPoints: 0,
+        tasksCompleted: 0,
+        currentStreak: 0,
+        longestStreak: 0,
+      });
+    }
+
     // If task is already completed, we need to undo the completion
     if (task.completed) {
-      // Get user stats to update them
-      const statsRepo = AppDataSource.getRepository(UserStats);
-      let stats = await statsRepo.findOne({ where: {} });
+      // Revert the points
+      stats.totalPoints -= task.points;
 
-      if (stats) {
-        // Revert the points
-        stats.totalPoints -= task.points;
+      // Decrement completed tasks count
+      stats.tasksCompleted = Math.max(0, stats.tasksCompleted - 1);
 
-        // Decrement completed tasks count
-        stats.tasksCompleted = Math.max(0, stats.tasksCompleted - 1);
-
-        // Update the task first
-        task.completed = false;
-        task.completedAt = undefined;
-        task.completionMood = undefined;
-        await taskRepo.save(task);
-
-        // Recalculate streak based on current task completion history
-        await this.recalculateStreak(stats);
-
-        await statsRepo.save(stats);
-
-        // Reassess badges
-        await this.checkForBadges(stats);
-      }
+      // Update the task first
+      task.completed = false;
+      task.completedAt = undefined;
+      task.completionMood = undefined;
+      await taskRepo.save(task);
     } else {
       // This is basically a complete task without mood
       task.completed = true;
       task.completedAt = new Date();
       task.completionMood = MoodType.NEUTRAL; // Default mood
 
+      // Update points and tasks completed
+      stats.totalPoints += task.points;
+      stats.tasksCompleted += 1;
+
       // Save the task first
       await taskRepo.save(task);
-
-      // Update stats
-      const statsRepo = AppDataSource.getRepository(UserStats);
-      let stats = await statsRepo.findOne({ where: {} });
-
-      if (stats) {
-        // Update points and tasks completed
-        stats.totalPoints += task.points;
-        stats.tasksCompleted += 1;
-
-        // Recalculate streak
-        await this.recalculateStreak(stats);
-
-        await statsRepo.save(stats);
-
-        // Check for badges
-        await this.checkForBadges(stats);
-      }
     }
+
+    // Always recalculate streak after toggling task status
+    await this.recalculateStreak(stats);
+    await statsRepo.save(stats);
+
+    // Always check for badges
+    await this.checkForBadges(stats);
 
     return task;
   }
@@ -244,6 +236,7 @@ export class TaskResolver {
       // No completed tasks, reset streak
       stats.currentStreak = 0;
       stats.lastCompletedAt = undefined;
+      stats.longestStreak = 0; // Reset longest streak if there are no completed tasks
       return;
     }
 
@@ -253,7 +246,7 @@ export class TaskResolver {
     for (const task of completedTasks) {
       if (!task.completedAt) continue;
 
-      // Get date string in YYYY-MM-DD format
+      // Get date string in YYYY-MM-DD format (using UTC to avoid timezone issues)
       const date = new Date(task.completedAt);
       const dateString = date.toISOString().split("T")[0];
 
@@ -272,34 +265,38 @@ export class TaskResolver {
     // Set lastCompletedAt to the most recent completion
     stats.lastCompletedAt = new Date(mostRecentTask.completedAt);
 
-    // Calculate streak
+    // Get today's date in the YYYY-MM-DD format
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
     const todayString = today.toISOString().split("T")[0];
 
+    // Calculate streak
     let currentStreak = 0;
-    let checkDate = new Date();
 
-    // Check today and previous days for task completions
-    for (let i = 0; i < 366; i++) {
-      // Check up to a year back
-      checkDate.setHours(0, 0, 0, 0);
+    // Start from today and go back day by day
+    let checkDate = new Date();
+    let consecutiveDays = true;
+
+    // Check today and go back up to a year
+    for (let i = 0; i < 366 && consecutiveDays; i++) {
+      // Format the current check date as YYYY-MM-DD
       const dateString = checkDate.toISOString().split("T")[0];
 
       if (tasksByDay.has(dateString)) {
+        // If we have tasks completed on this day, increment streak
         currentStreak++;
-      } else if (i > 0) {
-        // Allow for today to be empty but don't break streak
-        // Break on first gap (unless it's today)
-        if (i > 0 && dateString !== todayString) {
-          break;
-        }
+      } else if (dateString === todayString) {
+        // If it's today and no tasks are completed, that's okay - we don't break the streak
+        // We just don't increment it
+      } else {
+        // For any other day with no completed tasks, streak is broken
+        consecutiveDays = false;
       }
 
       // Move to the previous day
       checkDate.setDate(checkDate.getDate() - 1);
     }
 
+    // Update the current streak
     stats.currentStreak = currentStreak;
 
     // Update longest streak if needed
