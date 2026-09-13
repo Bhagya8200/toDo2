@@ -12,7 +12,7 @@ import { TaskPriority, MoodType } from "../src/shared/types";
 // Create Apollo client
 const client = new ApolloClient({
   // uri: "http://localhost:4002/graphql",
-  uri: import.meta.env.VITE_API_URL || "https://to-do-backend-mqjd.onrender.com/graphql",
+  uri: "https://to-do-backend-mqjd.onrender.com/graphql",
   cache: new InMemoryCache(),
 });
 
