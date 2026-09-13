@@ -18,6 +18,9 @@ exports.AppDataSource = new typeorm_1.DataSource({
     username: process.env.DB_USER,
     password: process.env.DB_PASS,
     database: process.env.DB_NAME,
+    ssl: {
+        rejectUnauthorized: false,
+    },
     synchronize: true,
     entities: [Task_1.Task, Badge_1.Badge, UserStats_1.UserStats],
 });
