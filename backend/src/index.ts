@@ -16,12 +16,7 @@ const main = async () => {
 
     app.use(
       cors({
-        origin: [
-          "https://to-do-app-ria-9b1a.vercel.app",
-          "https://to-do-3hqpijo1v-ria-9b1a.vercel.app",
-          "http://localhost:5173",
-          "http://localhost:4002",
-        ],
+        origin: true,
         credentials: true,
       }),
     );
